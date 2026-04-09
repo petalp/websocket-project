@@ -3,12 +3,14 @@ import { systemConfig } from "./config/sysConfig.ts";
 import matchRoute from "./routes/match.route.ts";
 import { createServer } from "node:http";
 import { attachWebsocketServer } from "./utils/websocket.ts";
+import arcjetMiddleware from "./middleware/arcjetMiddleware.ts";
 
 const app = express();
 
 const server = createServer(app)
 
 app.use(express.json());
+app.use(arcjetMiddleware)
 app.use("/matches", matchRoute);
 
 app.get("/", (_req, res) => {
