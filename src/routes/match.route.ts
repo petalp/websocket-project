@@ -77,6 +77,9 @@ matchRoute.post("/", async (req: Request, res: Response) => {
           status: status ? status : validateMatch.data.status,
         },
       });
+      if(res.app.locals.broadcastMatchCreated){
+          res.app.locals.broadcastMatchCreated(createMatch)
+      }
       res
         .status(201)
         .json({ message: "match is succesfully created", data: createMatch });
