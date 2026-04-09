@@ -1,0 +1,5 @@
+for (let i=0; i<10; i++){
+    const ws = WebSocket("ws://localhost:8080/ws");
+    ws.onopen = () => console.log(`Socket ${i} opened`)
+    ws.onclose = (e)=> console.log(`Socket ${i} closed: ${e.code} ${e.reason}`)
+}

@@ -1,5 +1,6 @@
-import type { Server } from "node:http";
+import type { IncomingMessage, Server } from "node:http";
 import { WebSocket, WebSocketServer } from "ws";
+import { aj } from "../config/arcjet.ts";
 
 interface IWebSocket extends WebSocket {
   isAlive: boolean;
@@ -26,8 +27,28 @@ export function attachWebsocketServer(server: Server) {
     maxPayload: 1024 * 1024,
   });
 
-  wss.on("connection", (raWs: WebSocket) => {
+  wss.on("connection", async (raWs: WebSocket, req: IncomingMessage) => {
     const ws = raWs as IWebSocket;
+    try {
+      const decision = await aj.protect(req, { requested: 10 });
+      if (decision.isDenied()) {
+        if (decision.reason.isRateLimit()) {
+          ws.close(1008, "Rate limit exceeded");
+          return;
+        }
+        if (decision.reason.isBot()) {
+          ws.close(1013, "Access denied");
+          return;
+        }
+        ws.close(1008, "Access denied");
+        return;
+      }
+    } catch (e) {
+      console.error("WS connection error");
+      ws.close(1011, "server security error");
+      return;
+    }
+
     ws.isAlive = true;
     ws.on("pong", () => {
       ws.isAlive = true;
