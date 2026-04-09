@@ -1,21 +1,23 @@
 import { z } from "zod";
 import { MatchStatus } from "../generated/prisma/enums.ts";
 
-
-
 /** ISO-8601 coerced DateTime — matches Prisma's DateTime */
-const dateTimeSchema = z.coerce
-  .date({ error: () => ({ message: "Must be a valid ISO-8601 date string" }) });
+const dateTimeSchema = z.coerce.date({
+  error: () => ({ message: "Must be a valid ISO-8601 date string" }),
+});
 
 // ============================================================
 // MatchStatus Enum
 // ============================================================
 
-export const MatchStatusSchema = z.enum([MatchStatus.finished, MatchStatus.live, MatchStatus.scheduled], {
-  error: () => ({
-    message: "status must be one of: scheduled | live | finished",
-  }),
-});
+export const MatchStatusSchema = z.enum(
+  [MatchStatus.finished, MatchStatus.live, MatchStatus.scheduled],
+  {
+    error: () => ({
+      message: "status must be one of: scheduled | live | finished",
+    }),
+  },
+);
 
 export type MatchStatusType = z.infer<typeof MatchStatusSchema>;
 
@@ -62,11 +64,14 @@ export const CreateMatchSchema = z
       if (data.endTime) return data.endTime > data.startTime;
       return true;
     },
-    { message: "endTime must be after startTime", path: ["endTime"] }
+    { message: "endTime must be after startTime", path: ["endTime"] },
   )
   .refine(
     (data) => data.homeTeam.toLowerCase() !== data.awayTeam.toLowerCase(),
-    { message: "homeTeam and awayTeam must be different teams", path: ["awayTeam"] }
+    {
+      message: "homeTeam and awayTeam must be different teams",
+      path: ["awayTeam"],
+    },
   );
 
 export type CreateMatchInput = z.infer<typeof CreateMatchSchema>;
@@ -103,11 +108,10 @@ export const UpdateMatchSchema = z
   })
   .refine(
     (data) => {
-      if (data.startTime && data.endTime)
-        return data.endTime > data.startTime;
+      if (data.startTime && data.endTime) return data.endTime > data.startTime;
       return true;
     },
-    { message: "endTime must be after startTime", path: ["endTime"] }
+    { message: "endTime must be after startTime", path: ["endTime"] },
   )
   .refine(
     (data) => {
@@ -115,7 +119,10 @@ export const UpdateMatchSchema = z
         return data.homeTeam.toLowerCase() !== data.awayTeam.toLowerCase();
       return true;
     },
-    { message: "homeTeam and awayTeam must be different teams", path: ["awayTeam"] }
+    {
+      message: "homeTeam and awayTeam must be different teams",
+      path: ["awayTeam"],
+    },
   );
 
 export type UpdateMatchInput = z.infer<typeof UpdateMatchSchema>;
@@ -125,13 +132,13 @@ export type UpdateMatchInput = z.infer<typeof UpdateMatchSchema>;
  * Includes all DB-generated fields.
  */
 export const MatchResponseSchema = z.object({
-  id:        z.number(),
-  sport:     z.string(),
-  homeTeam:  z.string(),
-  awayTeam:  z.string(),
-  status:    MatchStatusSchema,
+  id: z.number(),
+  sport: z.string(),
+  homeTeam: z.string(),
+  awayTeam: z.string(),
+  status: MatchStatusSchema,
   startTime: dateTimeSchema,
-  endTime:   dateTimeSchema.nullable(),
+  endTime: dateTimeSchema.nullable(),
   homeScore: z.number().int().min(0),
   awayScore: z.number().int().min(0),
   createdAt: dateTimeSchema,
@@ -139,21 +146,22 @@ export const MatchResponseSchema = z.object({
 
 export type MatchResponse = z.infer<typeof MatchResponseSchema>;
 
-
 export const CommentaryMetadataSchema = z
   .record(z.string(), z.unknown())
   .nullable()
-  .optional();
+  .optional()
+  .nullable();
 
 export type CommentaryMetadata = z.infer<typeof CommentaryMetadataSchema>;
 
-
 export const CreateCommentarySchema = z.object({
-  matchId: z.number({error:"matchId is required"}).int("matchId must be an integer"),
+  matchId: z
+    .number({ error: "matchId is required" })
+    .int("matchId must be an integer"),
   minute: z
     .number({ error: "minute is required" })
     .int("minute must be an integer")
-    .min(0,   "minute cannot be negative")
+    .min(0, "minute cannot be negative")
     .max(180, "minute cannot exceed 180"),
 
   sequence: z
@@ -164,19 +172,19 @@ export const CreateCommentarySchema = z.object({
   period: z
     .string({ error: "period is required" })
     .trim()
-    .min(1,  "period must not be empty")
+    .min(1, "period must not be empty")
     .max(20, "period must not exceed 20 characters"),
 
   eventType: z
     .string({ error: "eventType is required" })
     .trim()
-    .min(1,  "eventType must not be empty")
+    .min(1, "eventType must not be empty")
     .max(50, "eventType must not exceed 50 characters"),
 
   actor: z
     .string()
     .trim()
-    .min(1,   "actor must not be empty if provided")
+    .min(1, "actor must not be empty if provided")
     .max(100, "actor must not exceed 100 characters")
     .optional()
     .nullable(),
@@ -184,7 +192,7 @@ export const CreateCommentarySchema = z.object({
   team: z
     .string()
     .trim()
-    .min(1,   "team must not be empty if provided")
+    .min(1, "team must not be empty if provided")
     .max(100, "team must not exceed 100 characters")
     .optional()
     .nullable(),
@@ -192,14 +200,18 @@ export const CreateCommentarySchema = z.object({
   message: z
     .string({ error: "message is required" })
     .trim()
-    .min(1,    "message must not be empty")
+    .min(1, "message must not be empty")
     .max(1000, "message must not exceed 1000 characters"),
 
   metadata: CommentaryMetadataSchema,
 
   tags: z
     .array(
-      z.string().trim().min(1, "tag must not be empty").max(50, "tag must not exceed 50 characters")
+      z
+        .string()
+        .trim()
+        .min(1, "tag must not be empty")
+        .max(50, "tag must not exceed 50 characters"),
     )
     .max(20, "tags array must not exceed 20 items")
     .default([]),
@@ -218,11 +230,7 @@ export const UpdateCommentarySchema = z.object({
     .max(180)
     .optional(),
 
-  sequence: z
-    .number()
-    .int("sequence must be an integer")
-    .min(0)
-    .optional(),
+  sequence: z.number().int("sequence must be an integer").min(0).optional(),
 
   period: z.string().trim().min(1).max(20).optional(),
 
@@ -236,10 +244,7 @@ export const UpdateCommentarySchema = z.object({
 
   metadata: CommentaryMetadataSchema,
 
-  tags: z
-    .array(z.string().trim().min(1).max(50))
-    .max(20)
-    .optional(),
+  tags: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
 });
 
 export type UpdateCommentaryInput = z.infer<typeof UpdateCommentarySchema>;
@@ -248,17 +253,17 @@ export type UpdateCommentaryInput = z.infer<typeof UpdateCommentarySchema>;
  * RESPONSE — full shape returned from the DB / API layer.
  */
 export const CommentaryResponseSchema = z.object({
-  id:       z.coerce.number().int().positive(),
-  matchId:  z.coerce.number().int().positive(),
-  minute:    z.number().int().min(0).max(180),
-  sequence:  z.number().int().min(0),
-  period:    z.string(),
+  id: z.coerce.number().int().positive(),
+  matchId: z.coerce.number().int().positive(),
+  minute: z.number().int().min(0).max(180),
+  sequence: z.number().int().min(0),
+  period: z.string(),
   eventType: z.string(),
-  actor:     z.string().nullable(),
-  team:      z.string().nullable(),
-  message:   z.string(),
-  metadata:  CommentaryMetadataSchema,
-  tags:      z.array(z.string()),
+  actor: z.string().nullable(),
+  team: z.string().nullable(),
+  message: z.string(),
+  metadata: CommentaryMetadataSchema,
+  tags: z.array(z.string()),
   createdAt: dateTimeSchema,
 });
 
@@ -284,17 +289,14 @@ export const ListMatchesQuerySchema = z.object({
 
   sport: z.string().trim().min(1).max(50).optional(),
 
-  page: z.coerce
-    .number()
-    .int()
-    .min(1, "page must be at least 1").optional(),
+  page: z.coerce.number().int().min(1, "page must be at least 1").optional(),
 
   limit: z.coerce
     .number()
     .int()
-    .min(1,   "limit must be at least 1")
-    .max(100, "limit must not exceed 100").optional()
-
+    .min(1, "limit must be at least 1")
+    .max(100, "limit must not exceed 100")
+    .optional(),
 });
 
 export type ListMatchesQuery = z.infer<typeof ListMatchesQuerySchema>;

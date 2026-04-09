@@ -1,5 +1,3 @@
-
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -21,16 +19,16 @@ enum MatchStatus {
 // Table: matches
 // ------------------------------------------------------------
 model Match {
-  id        Int     @id @default(autoincrement())             @map("id")
-  sport     String                                        @map("sport")
-  homeTeam  String                                        @map("home_team")
-  awayTeam  String                                        @map("away_team")
-  status    MatchStatus @default(scheduled)               @map("status")
-  startTime DateTime                                      @map("start_time")
-  endTime   DateTime?                                     @map("end_time")
-  homeScore Int         @default(0)                       @map("home_score")
-  awayScore Int         @default(0)                       @map("away_score")
-  createdAt DateTime    @default(now())                   @map("created_at")
+  id        Int         @id @default(autoincrement()) @map("id")
+  sport     String      @map("sport")
+  homeTeam  String      @map("home_team")
+  awayTeam  String      @map("away_team")
+  status    MatchStatus @default(scheduled) @map("status")
+  startTime DateTime    @map("start_time")
+  endTime   DateTime?   @map("end_time")
+  homeScore Int         @default(0) @map("home_score")
+  awayScore Int         @default(0) @map("away_score")
+  createdAt DateTime    @default(now()) @map("created_at")
 
   // Relations
   commentary Commentary?
@@ -42,31 +40,29 @@ model Match {
 // Table: commentary
 // ------------------------------------------------------------
 model Commentary {
-  id        Int     @id @default(autoincrement())       @map("id")
-  matchId   Int    @unique                   @map("match_id")
-  minute    Int                                 @map("minute")
-  sequence  Int                                 @map("sequence")
-  period    String                              @map("period")
-  eventType String                              @map("event_type")
-  actor     String?                             @map("actor")
-  team      String?                             @map("team")
-  message   String                              @map("message")
-  metadata  Json?    @db.JsonB                  @map("metadata")
-  tags      String[]                            @map("tags")
-  createdAt DateTime @default(now())            @map("created_at")
+  id        Int      @id @default(autoincrement()) @map("id")
+  matchId   Int      @unique @map("match_id")
+  minute    Int      @map("minute")
+  sequence  Int      @map("sequence")
+  period    String   @map("period")
+  eventType String   @map("event_type")
+  actor     String?  @map("actor")
+  team      String?  @map("team")
+  message   String   @map("message")
+  metadata  Json?    @map("metadata") @db.JsonB
+  tags      String[] @map("tags")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
 
   // Guarantees event ordering is deterministic within a match
   // when multiple events share the same minute
-  @@unique([matchId, minute, sequence],  name: "uq_commentary_match_event")
-
+  @@unique([matchId, minute, sequence], name: "uq_commentary_match_event")
   // Core query patterns for real-time feeds
-  @@index([matchId],                     name: "idx_commentary_match_id")
-  @@index([matchId, minute],             name: "idx_commentary_match_minute")
-  @@index([matchId, eventType],          name: "idx_commentary_match_event_type")
-  @@index([createdAt],                   name: "idx_commentary_created_at")
-
+  @@index([matchId], name: "idx_commentary_match_id")
+  @@index([matchId, minute], name: "idx_commentary_match_minute")
+  @@index([matchId, eventType], name: "idx_commentary_match_event_type")
+  @@index([createdAt], name: "idx_commentary_created_at")
   @@map("commentary")
 }
