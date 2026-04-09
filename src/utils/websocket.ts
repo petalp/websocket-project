@@ -27,32 +27,28 @@ export function attachWebsocketServer(server: Server) {
     maxPayload: 1024 * 1024,
   });
 
-  wss.on("connection", async(raWs: WebSocket, req:IncomingMessage) => {
-     const ws = raWs as IWebSocket;
-    try{
-        const decision = await aj.protect(req, {requested:10})
-        if(decision.isDenied()){
-            if(decision.reason.isRateLimit()){
-                const code =  1008
-                const reason = "Rate limit exceed"
-            ws.close(code, reason)
-            return;
-            }
-            if(decision.reason.isBot()){
-                const code =  1013
-                const reason = "Access Denied"
-                ws.close(code, reason)
-            return;
-            }
-            
+  wss.on("connection", async (raWs: WebSocket, req: IncomingMessage) => {
+    const ws = raWs as IWebSocket;
+    try {
+      const decision = await aj.protect(req, { requested: 10 });
+      if (decision.isDenied()) {
+        if (decision.reason.isRateLimit()) {
+          ws.close(1008, "Rate limit exceeded");
+          return;
         }
-
-    }catch(e){
-        console.error("WS connection error")
-        ws.close(1011, "server security error")
+        if (decision.reason.isBot()) {
+          ws.close(1013, "Access denied");
+          return;
+        }
+        ws.close(1008, "Access denied");
         return;
+      }
+    } catch (e) {
+      console.error("WS connection error");
+      ws.close(1011, "server security error");
+      return;
     }
-   
+
     ws.isAlive = true;
     ws.on("pong", () => {
       ws.isAlive = true;

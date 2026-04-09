@@ -15,7 +15,7 @@ async function arcjetMiddleware(
       res.status(401).json({ messsage: "Too many request" });
       return;
     } else if (decision.reason.isBot()) {
-      res.status(403).json({ error: "no bot allowed" });
+      res.status(429).json({ error: "no bot allowed" });
       return;
     } else {
       res.status(403).json({ message: decision.reason });
