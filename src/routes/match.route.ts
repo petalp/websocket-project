@@ -11,7 +11,7 @@ const matchRoute: Router = Router();
 
 matchRoute.get("/", async (req: Request, res: Response) => {
   const parsedMatchQuery = ListMatchesQuerySchema.safeParse(req.query);
-  
+
   try {
     if (parsedMatchQuery.success) {
       const limit = Math.min(parsedMatchQuery.data?.limit ?? 50, 100);
@@ -48,7 +48,6 @@ matchRoute.get("/", async (req: Request, res: Response) => {
       .status(500)
       .json({ error: "Failed to create match.", details: JSON.stringify(e) });
   }
-
 });
 
 matchRoute.post("/", async (req: Request, res: Response) => {
@@ -60,12 +59,12 @@ matchRoute.post("/", async (req: Request, res: Response) => {
 
   try {
     if (validateMatch.data) {
-    const endTime = validateMatch.data.endTime 
-        ? new Date(validateMatch.data.endTime) 
+      const endTime = validateMatch.data.endTime
+        ? new Date(validateMatch.data.endTime)
         : null;
-    const status = endTime 
-       ? getMatchStatus(validateMatch.data.startTime, endTime) 
-       : MatchStatus.scheduled;
+      const status = endTime
+        ? getMatchStatus(validateMatch.data.startTime, endTime)
+        : MatchStatus.scheduled;
 
       const createMatch = await prisma.match.create({
         data: {
@@ -77,12 +76,12 @@ matchRoute.post("/", async (req: Request, res: Response) => {
           status: status ? status : validateMatch.data.status,
         },
       });
-      
-       try {
-       res.app.locals.broadcastMatchCreated?.(createMatch);
+
+      try {
+        res.app.locals.broadcastMatchCreated?.(createMatch);
       } catch (broadcastError) {
         console.error("Failed to broadcast match_create", broadcastError);
-     }
+      }
       res
         .status(201)
         .json({ message: "match is succesfully created", data: createMatch });
