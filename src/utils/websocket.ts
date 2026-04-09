@@ -7,9 +7,10 @@ export function sendJson(ws: WebSocket, payload: unknown) {
 }
 
 export function broadcast(wss: WebSocketServer, payload: unknown) {
+    const message = JSON.stringify(payload);
   for (const client of wss.clients) {
-    if (client.readyState !== WebSocket.OPEN) return;
-    client.send(JSON.stringify(payload));
+      if (client.readyState !== WebSocket.OPEN) continue;
+        client.send(message);
   }
 }
 
