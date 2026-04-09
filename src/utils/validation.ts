@@ -248,8 +248,8 @@ export type UpdateCommentaryInput = z.infer<typeof UpdateCommentarySchema>;
  * RESPONSE — full shape returned from the DB / API layer.
  */
 export const CommentaryResponseSchema = z.object({
-  id:       z.number(),
-  matchId:  z.number(),
+  id:       z.coerce.number().int().positive(),
+  matchId:  z.coerce.number().int().positive(),
   minute:    z.number().int().min(0).max(180),
   sequence:  z.number().int().min(0),
   period:    z.string(),

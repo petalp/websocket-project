@@ -11,27 +11,27 @@ const matchRoute: Router = Router();
 
 matchRoute.get("/", async (req: Request, res: Response) => {
   const parsedMatchQuery = ListMatchesQuerySchema.safeParse(req.query);
-  if (!parsedMatchQuery.success) {
-    res.status(402).json({ message: JSON.stringify(parsedMatchQuery.error) });
-  }
-
+  
   try {
     if (parsedMatchQuery.success) {
       const limit = Math.min(parsedMatchQuery.data?.limit ?? 50, 100);
-      console.log(parsedMatchQuery.data.page);
-      const skip = parsedMatchQuery.data.page ? 1 : undefined;
+      const cursor = parsedMatchQuery.data.page;
+      const skip = cursor ? 1 : undefined;
+
       const status = parsedMatchQuery.data.status
         ? parsedMatchQuery.data.status
         : MatchStatus.scheduled;
+
       const sport = parsedMatchQuery.data.sport
         ? parsedMatchQuery.data.sport
         : "football";
+
       const getMatches = await prisma.match.findMany({
         take: limit,
         skip: skip,
         ...(skip && {
           cursor: {
-            id: parsedMatchQuery.data.page,
+            id: cursor,
           },
         }),
         where: {
@@ -41,7 +41,7 @@ matchRoute.get("/", async (req: Request, res: Response) => {
       });
       res.status(200).json({ message: "successful", data: getMatches });
     } else {
-      res.status(402).json({ message: JSON.stringify(parsedMatchQuery.error) });
+      res.status(400).json({ message: JSON.stringify(parsedMatchQuery.error) });
     }
   } catch (e) {
     res
@@ -49,7 +49,6 @@ matchRoute.get("/", async (req: Request, res: Response) => {
       .json({ error: "Failed to create match.", details: JSON.stringify(e) });
   }
 
-  res.status(200).json({ message: "Everything is ok" });
 });
 
 matchRoute.post("/", async (req: Request, res: Response) => {
@@ -61,15 +60,18 @@ matchRoute.post("/", async (req: Request, res: Response) => {
 
   try {
     if (validateMatch.data) {
-      const status = getMatchStatus(
-        validateMatch.data.startTime,
-        validateMatch.data.endTime as Date,
-      );
+    const endTime = validateMatch.data.endTime 
+        ? new Date(validateMatch.data.endTime) 
+        : null;
+    const status = endTime 
+       ? getMatchStatus(validateMatch.data.startTime, endTime) 
+       : MatchStatus.scheduled;
+
       const createMatch = await prisma.match.create({
         data: {
           ...validateMatch.data,
           startTime: new Date(validateMatch.data.startTime),
-          endTime: new Date(validateMatch.data.endTime as Date),
+          endTime: endTime,
           homeScore: validateMatch.data.homeScore ?? 0,
           awayScore: validateMatch.data.awayScore ?? 0,
           status: status ? status : validateMatch.data.status,
